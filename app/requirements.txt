@@ -1,0 +1,7 @@
+FastAPI
+uvicorn
+pandas
+scikit-learn
+pytest
+httpx
+gunicorn
