@@ -1,9 +1,11 @@
-from sqlalchemy import create_engine
-from sqlalchemy import text
+from _utils import LoadProcessor
 
-db_path = "/data_pipeline/globo.db"
-engine = create_engine(f"sqlite://{db_path}", echo=True)
 
-with engine.connect() as conn:
-    result = conn.execute(text("select 'hello world'"))
-    print(result.all())
+#Load from source (In this case, local)
+
+load_processor = LoadProcessor()
+load_processor.train()
+load_processor.item()
+
+
+
