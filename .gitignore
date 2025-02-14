@@ -1,3 +1,7 @@
+#
+data_pipeline/source_files/itens/*.csv
+data_pipeline/source_files/treino/*.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
