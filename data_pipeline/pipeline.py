@@ -1,7 +1,10 @@
-from _utils import ProcessTrain, ProcessItem
+from _utils import load_all
+from _process import ProcessTrain, ProcessItem
+from _database import DatabaseFull
 
-process_train: ProcessTrain = ProcessTrain()
-process_item: ProcessItem = ProcessItem()
+# Load Train and Item folders
+load_all(ProcessTrain, ProcessItem)
 
-process_train.run()
-process_item.run()
+# Create the join table from train and item
+database_full: DatabaseFull = DatabaseFull()
+database_full.table_full()
