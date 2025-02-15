@@ -1,11 +1,7 @@
-from _utils import LoadProcessor
+from _utils import ProcessTrain, ProcessItem
 
+process_train: ProcessTrain = ProcessTrain()
+process_item: ProcessItem = ProcessItem()
 
-#Load from source (In this case, local)
-
-load_processor = LoadProcessor()
-load_processor.train()
-load_processor.item()
-
-
-
+process_train.run()
+process_item.run()

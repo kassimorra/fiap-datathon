@@ -3,59 +3,79 @@ from _database import DatabaseTrain, DatabaseItem
 from psycopg2.extras import execute_values
 import glob
 
-class LoadProcessor:
+class ProcessParam:
     def __init__(self):
-        self.path = {
+        self.path : dict = {
             "train" : "./source_files/treino/*.csv",
             "item" : "./source_files/itens/*.csv"
         }
+        self.batch_size : int = 1000
+        self._num_batches: int = 0
 
-    def process(self, database_cls, path_key):
-        with database_cls() as db:
-            db.recreate_table()
-            self._db_insert_all_csv(db, self.path[path_key])
+    @property
+    def num_batches(self) -> int:
+        return self._num_batches
 
-    def train(self):
-        self.process(DatabaseTrain, "train")
+    @num_batches.setter
+    def num_batches(self, new_value: int) -> None:
+        self._num_batches = new_value
 
-    def item(self):
-        self.process(DatabaseItem, "item")
+    def calculate_num_batches(self, len_df: int) -> None:
+        self.num_batches = len_df // self.batch_size + (1 if len_df % self.batch_size else 0)
 
-    def _db_insert_all_csv(self, database, path):
-        for fpath in glob.glob(f"{path}"):
-            df = pd.read_csv(fpath, delimiter=",")
-            if getattr(database, "columns_explode", False):
-                self._df_rule_exclude(df)
-            self._db_batch_insert(database, df)
+def process_insert_db(df: pd.DataFrame, db: DatabaseTrain, num_batches: int, batch_index: int) -> None:
+    rows_to_insert: list = list(df.itertuples(index=False, name=None))
+    execute_values(db.cursor, db.insert_table(), rows_to_insert)
+    db.conn.commit()
+    print(f"Processed batch {batch_index + 1}/{num_batches}")
 
-    def _df_rule_exclude(self, df):
-        df.drop(columns=['timestampHistory_new'], inplace=True) 
+def process_get_df_batch(df: pd.DataFrame, batch_size: int, batch_index: int) -> pd.DataFrame:
+    start = batch_index * batch_size
+    end = (batch_index + 1) * batch_size
+    return df.iloc[start:end]
 
-    def _db_insert(self, df, database):
-        rows_to_insert = list(df.itertuples(index=False, name=None))
-        execute_values(database.cursor, database.insert_table(), rows_to_insert)
-        database.conn.commit()
+class Process:
+    def __init__(self):
+        self._param: ProcessParam = ProcessParam()
+        self._database = None
+        self._type: str = ''
 
-    def _get_num_batches(self, len_df, batch_size):
-        return len_df // batch_size + (1 if len_df % batch_size else 0)
-
-    def _db_batch_insert(self, database, df, batch_size=1000):
-        num_batches = self._get_num_batches(len(df), batch_size)
-
-        for batch_index in range(num_batches):
-
-            df_batch = self._df_get_batch(batch_index, batch_size, df)
-            if getattr(database, "columns_explode", False):
-                df_batch = self._df_rule_explode(df_batch, database.columns_explode)
-            self._db_insert(df_batch, database)
-            print(f"Processed batch {batch_index + 1}/{num_batches}")    
-
-    def _df_get_batch(self, batch_index, batch_size, df):
-        start = batch_index * batch_size
-        end = (batch_index + 1) * batch_size
-        return df.iloc[start:end]
-
-    def _df_rule_explode(self, df, columns_explode):
+    def _process_df_rule(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        df[columns_explode] = df[columns_explode].apply(lambda col: col.fillna('').astype(str).str.split(','))
-        return df.explode(columns_explode).reset_index(drop=True)
+        return df
+
+    def _setup_database(self) -> None:
+        self._database.recreate_table()
+
+    def _process_file(self, fpath: str) -> None:
+        df: pd.DataFrame = pd.read_csv(fpath, delimiter=",")   
+        self._param.calculate_num_batches(len(df))
+
+        for batch_index in range(self._param.num_batches):
+            df_batch = process_get_df_batch(df, self._param.num_batches, batch_index)
+            df_rule = self._process_df_rule(df_batch)
+            process_insert_db(df_rule, self._database, self._param.num_batches, batch_index)
+
+    def run(self) -> None:
+        self._setup_database()
+        for fpath in glob.glob(f"{self._param.path[self._type]}"):
+            self._process_file(fpath)
+        self._database.close()
+
+class ProcessTrain(Process):
+    def __init__(self):
+        super().__init__()
+        self._database: DatabaseTrain = DatabaseTrain()
+        self._type: str = 'train'
+
+    def _process_df_rule(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df.drop(columns=['timestampHistory_new'], inplace=True)
+        df[self._database.columns_explode] = df[self._database.columns_explode].apply(lambda col: col.fillna('').astype(str).str.split(','))
+        return df.explode(self._database.columns_explode).reset_index(drop=True)    
+
+class ProcessItem(Process):
+    def __init__(self):
+        super().__init__()
+        self._database: DatabaseItem = DatabaseItem()
+        self._type: str = 'item'
