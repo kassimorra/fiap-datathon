@@ -1,0 +1,22 @@
+
+6
+
+globo"useridJfeast
+­îÄ½€ÑÚV­îÄ½€ÑÚV
+:
+
+__dummy"
+__dummy_idJfeast
+­îÄ½€ÑÚV­îÄ½€ÑÚV1"$8b9ff121-3784-428c-8986-db4bd5d0ca37*­îÄ½à×“¡2Í
+®
+globo_featuresfeastglobo"
+history"
+numberofclickshistory:×event_timestamp*created‚L
+J{"name": "globo_source", "query": "select * from table_full", "table": ""}ŠZfeast.infra.offline_stores.contrib.postgres_offline_store.postgres_source.PostgreSQLSource¢globo_source@b
+
+userid
+­îÄ½€ÑÚV­îÄ½€ÑÚVbßevent_timestamp*created‚L
+J{"name": "globo_source", "query": "select * from table_full", "table": ""}ŠZfeast.infra.offline_stores.contrib.postgres_offline_store.postgres_source.PostgreSQLSource¢globo_sourceªfeastŠG
+)
+feast project to predict the next news
+­îÄ½¨Â©T­îÄ½¨Â©T

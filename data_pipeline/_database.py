@@ -1,4 +1,5 @@
 import psycopg2
+from _utils import print_status
 
 class Database:
     def __init__(self):
@@ -26,10 +27,10 @@ class Database:
             self.cursor.execute(drop_table_sql)
             self.cursor.execute(schema_sql)
             self.conn.commit()
-            print(f"Table `{table_name}` recreated successfully.")
+            print_status("recreated successfully")
         except psycopg2.Error as e:
             self.conn.rollback()  # Rollback in case of error
-            print(f"Error recreating table `{table_name}`: {e}")
+            print_status(f"Error recreating table `{table_name}`: {e}")
 
 class DatabaseTrain(Database):
     def __init__(self):
