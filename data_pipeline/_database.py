@@ -96,7 +96,8 @@ class DatabaseFull(Database):
         schema_sql = """
         select
             a.*,
-            b.*
+            b.*,
+            now() as create_timestamp
         into table_full
         from table_train as a
         left join table_item as b
