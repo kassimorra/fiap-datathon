@@ -1,4 +1,5 @@
 import psycopg2
+from _utils import print_status
 
 class Database:
     def __init__(self):
@@ -26,17 +27,10 @@ class Database:
             self.cursor.execute(drop_table_sql)
             self.cursor.execute(schema_sql)
             self.conn.commit()
-            print(f"Table `{table_name}` recreated successfully.")
+            print_status("recreated successfully")
         except psycopg2.Error as e:
             self.conn.rollback()  # Rollback in case of error
-            print(f"Error recreating table `{table_name}`: {e}")
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-
+            print_status(f"Error recreating table `{table_name}`: {e}")
 
 class DatabaseTrain(Database):
     def __init__(self):
@@ -45,26 +39,26 @@ class DatabaseTrain(Database):
 
     def recreate_table(self):
         schema_sql = """
-        CREATE TABLE IF NOT EXISTS table_train (
-            userId TEXT,
-            userType TEXT,
-            historySize INT,
-            history TEXT,
-            timestampHistory BIGINT,
-            numberOfClicksHistory INT,
-            timeOnPageHistory INT,
-            scrollPercentageHistory FLOAT,
-            pageVisitsCountHistory INT
+        create table if not exists table_train (
+            userid text,
+            usertype text,
+            historysize int,
+            history text,
+            timestamphistory timestamp,
+            numberofclickshistory int,
+            timeonpagehistory int,
+            scrollpercentagehistory float,
+            pagevisitscounthistory int
         );
         """
         super().recreate_table("table_train", schema_sql)
 
     def insert_table(self):
         insert_query = """
-        INSERT INTO table_train (
-            userId, userType, historySize, history, timestampHistory,
-            numberOfClicksHistory, timeOnPageHistory, scrollPercentageHistory, pageVisitsCountHistory
-        ) VALUES %s
+        insert into table_train (
+            userid, usertype, historysize, history, timestamphistory,
+            numberofclickshistory, timeonpagehistory, scrollpercentagehistory, pagevisitscounthistory
+        ) values %s
         """
         return insert_query
 
@@ -74,22 +68,39 @@ class DatabaseItem(Database):
 
     def recreate_table(self):
         schema_sql = """
-        CREATE TABLE IF NOT EXISTS table_item (
-            page TEXT,
-            url TEXT,
-            issued TEXT,
-            modified TEXT,
-            title TEXT,
-            body TEXT,
-            caption TEXT
+        create table if not exists table_item (
+            page text,
+            url text,
+            issued timestamp,
+            modified timestamp,
+            title text,
+            body text,
+            caption text
         );
         """
         super().recreate_table("table_item", schema_sql)
 
     def insert_table(self):
         insert_query = """
-        INSERT INTO table_item (
+        insert into table_item (
             page, url, issued, modified, title, body, caption
-        ) VALUES %s
+        ) values %s
         """
         return insert_query
+    
+class DatabaseFull(Database):
+    def __init__(self):
+        super().__init__()
+
+    def table_full(self) -> None:
+        schema_sql = """
+        select
+            a.*,
+            b.*,
+            now() as create_timestamp
+        into table_full
+        from table_train as a
+        left join table_item as b
+            on a.history = b.page
+        """        
+        super().recreate_table("table_full", schema_sql)
