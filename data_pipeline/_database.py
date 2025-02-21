@@ -27,7 +27,7 @@ class Database:
             self.cursor.execute(drop_table_sql)
             self.cursor.execute(schema_sql)
             self.conn.commit()
-            print_status("recreated successfully")
+            print_status(f"recreated successfully - {table_name}")
         except psycopg2.Error as e:
             self.conn.rollback()  # Rollback in case of error
             print_status(f"Error recreating table `{table_name}`: {e}")
@@ -35,7 +35,7 @@ class Database:
 class DatabaseTrain(Database):
     def __init__(self):
         super().__init__()
-        self.columns_explode = ["history", "timestampHistory", "numberOfClicksHistory", "timeOnPageHistory", "scrollPercentageHistory", "pageVisitsCountHistory"]
+        self.columns_explode = ["history", "timestampHistory", "numberOfClicksHistory", "timeOnPageHistory", "scrollPercentageHistory", "pageVisitsCountHistory", "timestampHistory_new"]
 
     def recreate_table(self):
         schema_sql = """
@@ -48,7 +48,8 @@ class DatabaseTrain(Database):
             numberofclickshistory int,
             timeonpagehistory int,
             scrollpercentagehistory float,
-            pagevisitscounthistory int
+            pagevisitscounthistory int,
+            timestampHistory_new timestamp
         );
         """
         super().recreate_table("table_train", schema_sql)
@@ -57,7 +58,8 @@ class DatabaseTrain(Database):
         insert_query = """
         insert into table_train (
             userid, usertype, historysize, history, timestamphistory,
-            numberofclickshistory, timeonpagehistory, scrollpercentagehistory, pagevisitscounthistory
+            numberofclickshistory, timeonpagehistory, scrollpercentagehistory, 
+            pagevisitscounthistory, timestampHistory_new
         ) values %s
         """
         return insert_query

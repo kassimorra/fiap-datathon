@@ -47,7 +47,7 @@ class Process:
         self._database.recreate_table()
 
     def _process_file(self, fpath: str) -> None:
-        df: pd.DataFrame = pd.read_csv(fpath, delimiter=",")   
+        df: pd.DataFrame = pd.read_csv(fpath, delimiter=",", quotechar='"', on_bad_lines="skip")   
         self._param.calculate_num_batches(len(df))
 
         for batch_index in range(self._param.num_batches):
@@ -69,10 +69,12 @@ class ProcessTrain(Process):
 
     def _process_df_rule(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        df.drop(columns=['timestampHistory_new'], inplace=True)
+        # df.drop(columns=['timestampHistory_new'], inplace=True)
         df[self._database.columns_explode] = df[self._database.columns_explode].apply(lambda col: col.fillna('').astype(str).str.split(','))
         df = df.explode(self._database.columns_explode).reset_index(drop=True)
         df["timestampHistory"] = pd.to_datetime(pd.to_numeric(df["timestampHistory"]), unit="ms")
+        df["timestampHistory_new"] = pd.to_datetime(pd.to_numeric(df["timestampHistory_new"]), unit="ms")
+        df["history"] = df["history"].str.replace(' ', '', regex=False)
         return df
 
 class ProcessItem(Process):
@@ -85,4 +87,5 @@ class ProcessItem(Process):
         df = df.copy()
         df["issued"] = pd.to_datetime(df["issued"])
         df["modified"] = pd.to_datetime(df["modified"])
+        df["page"] = df["page"].str.replace(' ', '', regex=False)
         return df
