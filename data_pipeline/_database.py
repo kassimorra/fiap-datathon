@@ -27,7 +27,7 @@ class Database:
             self.cursor.execute(drop_table_sql)
             self.cursor.execute(schema_sql)
             self.conn.commit()
-            print_status("recreated successfully")
+            print_status(f"recreated successfully - {table_name}")
         except psycopg2.Error as e:
             self.conn.rollback()  # Rollback in case of error
             print_status(f"Error recreating table `{table_name}`: {e}")
@@ -35,7 +35,7 @@ class Database:
 class DatabaseTrain(Database):
     def __init__(self):
         super().__init__()
-        self.columns_explode = ["history", "timestampHistory", "numberOfClicksHistory", "timeOnPageHistory", "scrollPercentageHistory", "pageVisitsCountHistory"]
+        self.columns_explode = ["history", "timestampHistory", "numberOfClicksHistory", "timeOnPageHistory", "scrollPercentageHistory", "pageVisitsCountHistory", "timestampHistory_new"]
 
     def recreate_table(self):
         schema_sql = """
@@ -48,7 +48,8 @@ class DatabaseTrain(Database):
             numberofclickshistory int,
             timeonpagehistory int,
             scrollpercentagehistory float,
-            pagevisitscounthistory int
+            pagevisitscounthistory int,
+            timestampHistory_new timestamp
         );
         """
         super().recreate_table("table_train", schema_sql)
@@ -57,7 +58,8 @@ class DatabaseTrain(Database):
         insert_query = """
         insert into table_train (
             userid, usertype, historysize, history, timestamphistory,
-            numberofclickshistory, timeonpagehistory, scrollpercentagehistory, pagevisitscounthistory
+            numberofclickshistory, timeonpagehistory, scrollpercentagehistory, 
+            pagevisitscounthistory, timestampHistory_new
         ) values %s
         """
         return insert_query
@@ -69,13 +71,11 @@ class DatabaseItem(Database):
     def recreate_table(self):
         schema_sql = """
         create table if not exists table_item (
-            page text,
-            url text,
+            history text,
+            page_url text,
             issued timestamp,
             modified timestamp,
-            title text,
-            body text,
-            caption text
+            news_concat text
         );
         """
         super().recreate_table("table_item", schema_sql)
@@ -83,7 +83,7 @@ class DatabaseItem(Database):
     def insert_table(self):
         insert_query = """
         insert into table_item (
-            page, url, issued, modified, title, body, caption
+            history, page_url, issued, modified, news_concat
         ) values %s
         """
         return insert_query
@@ -96,11 +96,14 @@ class DatabaseFull(Database):
         schema_sql = """
         select
             a.*,
-            b.*,
+            b.page_url,
+            b.issued,
+            b.modified,
+            b.news_concat,
             now() as create_timestamp
         into table_full
         from table_train as a
         left join table_item as b
-            on a.history = b.page
+            on a.history = b.history
         """        
         super().recreate_table("table_full", schema_sql)
