@@ -47,7 +47,7 @@ class Process:
         self._database.recreate_table()
 
     def _process_file(self, fpath: str) -> None:
-        df: pd.DataFrame = pd.read_csv(fpath, delimiter=",", quotechar='"', on_bad_lines="skip")   
+        df: pd.DataFrame = pd.read_csv(fpath, sep=",", quotechar='"', encoding="utf-8", engine="python", on_bad_lines="skip")
         self._param.calculate_num_batches(len(df))
 
         for batch_index in range(self._param.num_batches):
