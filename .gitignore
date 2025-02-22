@@ -1,6 +1,7 @@
 #
 data_pipeline/source_files/itens/*.csv
 data_pipeline/source_files/treino/*.csv
+data_pipeline/source_files/correct_itens/*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
