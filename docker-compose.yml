@@ -1,0 +1,32 @@
+version: '3.4'
+
+services:
+  data_pipeline:
+    # image: ./data_pipeline
+    build:
+      context: ./data_pipeline
+      dockerfile: ./Dockerfile
+    container_name: data-pipeline
+    ports:
+      - 8000:8000
+  feast_repo:
+    build:
+      context: ./feast_repo/globo_feature
+      dockerfile: ./Dockerfile
+    container_name: feast-globo
+    ports:
+      - 8001:8001
+  model:
+    build:
+      context: ./model
+      dockerfile: ./Dockerfile
+    container_name: model
+    ports:
+      - 8002:8002
+  streamlit:
+    build:
+      context: ./streamlit
+      dockerfile: ./Dockerfile
+    container_name: streamlit
+    ports:
+      - 8003:8003
