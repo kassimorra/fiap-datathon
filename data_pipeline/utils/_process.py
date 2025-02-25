@@ -1,8 +1,8 @@
 import pandas as pd
 import glob
-from _database import DatabaseTrain, DatabaseItem
+from ._database import DatabaseTrain, DatabaseItem
 from psycopg2.extras import execute_values
-from _correct_itens import CorrectItem
+from ._correct_itens import CorrectItem
 
 class ProcessParam:
     def __init__(self):

@@ -1,5 +1,5 @@
 import psycopg2
-from _utils import print_status
+from ._utils import print_status
 
 class Database:
     def __init__(self):
@@ -11,7 +11,7 @@ class Database:
             dbname="globo",
             user="postgres",
             password="admin1234",
-            host="localhost",
+            host="host.docker.internal",
             port="5432"
         )
 
