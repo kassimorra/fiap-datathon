@@ -40,6 +40,14 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install -U setuptools && \
     python -m pip install -r requirements.txt
 
+# Handle NLTK StopWords
+# RUN python -c "import nltk; nltk.download('stopwords')"
+# #nltk.download('stopwords')
+
+# Create a directory for NLTK data and download stopwords during build
+RUN mkdir -p /nltk_data && \
+    python -m nltk.downloader -d /nltk_data stopwords
+
 # Switch to the non-privileged user to run the application.
 USER appuser
 

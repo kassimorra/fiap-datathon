@@ -1,9 +1,11 @@
-import psycopg2
+import psycopg
 import pandas as pd
 import nltk
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+nltk.data.path.append('/nltk_data')
 
 #nltk.download('stopwords')
 
@@ -12,11 +14,11 @@ def get_data_db(sql_query: str):
         "dbname":"globo",
         "user":"postgres",
         "password":"admin1234",
-        "host":"localhost",
+        "host":"host.docker.internal",
         "port":"5432"
     }
 
-    with psycopg2.connect(**conn_params) as conn:
+    with psycopg.connect(**conn_params) as conn:
         return pd.read_sql(sql_query, conn)
    
 def get_user_history(user_id: str) -> pd.DataFrame:
@@ -42,7 +44,7 @@ def remove_read_news(last_news, user_data) -> pd.DataFrame:
     remove_read_news = last_news[~last_news['history'].isin(user_data['history'])]
     return remove_read_news
 
-def get_prediction(predict_data, history) -> pd.DataFrame:
+def get_prediction_df(predict_data, history) -> pd.DataFrame:
     portuguese_stop_words = stopwords.words('portuguese')
     tfidf: TfidfVectorizer = TfidfVectorizer(stop_words=portuguese_stop_words)
     tfidf_matrix = tfidf.fit_transform(predict_data['news_concat'])
@@ -55,4 +57,6 @@ def get_prediction(predict_data, history) -> pd.DataFrame:
     sim_scores = sim_scores[1:8]
     news_indices = [i[0] for i in sim_scores]
     df_output: pd.DataFrame = predict_data.iloc[news_indices][predict_data.iloc[news_indices]['read'] == False]
+    df_output = df_output[['page_url', 'history']]
+    df_output = df_output.rename(columns={'history': 'news_id'})
     return df_output
