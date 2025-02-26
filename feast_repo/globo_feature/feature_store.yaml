@@ -9,7 +9,7 @@ registry: data/registry.db
     #     pool_pre_ping: true
 online_store:
     type: postgres
-    host: localhost
+    host: host.docker.internal
     port: 5432
     database: globo
     db_schema: public
@@ -17,7 +17,7 @@ online_store:
     password: admin1234
 offline_store:
     type: postgres
-    host: localhost
+    host: host.docker.internal
     port: 5432
     database: globo
     db_schema: public

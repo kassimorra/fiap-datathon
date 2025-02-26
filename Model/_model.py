@@ -8,6 +8,7 @@ def get_prediction(userid: str) -> dict:
     last_news = get_last_news(10)
     read_news = remove_read_news(last_news, user_data)
     predict_data = pd.concat([user_data, read_news], axis=0, ignore_index=True)
-    history: list[str] = ('7fe849c0-4a55-429d-b480-11ee216909dd', '13f2cc37-f575-44d5-b33f-045d0b0a912b')
+    history: list[str] = user_data['history'].to_list()
+    # history: list[str] = ('7fe849c0-4a55-429d-b480-11ee216909dd', '13f2cc37-f575-44d5-b33f-045d0b0a912b')
     df_predict: pd.DataFrame = get_prediction_df(predict_data, history)
     return df_predict.to_dict(orient="records")

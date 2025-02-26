@@ -44,6 +44,10 @@ USER appuser
 # Copy the source code into the container.
 COPY . .
 
+USER root
+RUN chmod 777 /app/data/registry.db
+USER appuser
+
 # Expose the port that the application listens on.
 EXPOSE 8001
 

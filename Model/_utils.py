@@ -1,10 +1,10 @@
 import psycopg
 import pandas as pd
 import nltk
+import requests
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
 nltk.data.path.append('/nltk_data')
 
 #nltk.download('stopwords')
@@ -21,6 +21,16 @@ def get_data_db(sql_query: str):
     with psycopg.connect(**conn_params) as conn:
         return pd.read_sql(sql_query, conn)
    
+#get the features from feast feature store
+# def get_user_history(userid: str) -> pd.DataFrame:
+#     columns = ['history', 'timestamphistory', 'news_concat']
+#     response = requests.get(f"http://feast-globo:8001/getfeatures/{userid}")
+#     data = response.json()
+#     user_data = pd.DataFrame(data['features'])
+#     user_data = user_data[columns]
+#     user_data['read'] = True
+#     return user_data
+
 def get_user_history(user_id: str) -> pd.DataFrame:
     columns: str = 'history, timestamphistory, news_concat'
     sql_query: str = f"select {columns} from table_full where userid = '{user_id}' order by scrollpercentagehistory desc limit 5"

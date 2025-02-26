@@ -12,12 +12,10 @@ from feast import (
     RequestSource,
 )
 from feast.on_demand_feature_view import on_demand_feature_view
-from feast.types import Float32, Float64, Int64, String
+from feast.types import Float32, Float64, Int64, String, UnixTimestamp
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
 
 project = Project(name="globo_feature", description="project to predict the next news")
-
-# globo = Entity(name="globo", join_keys=["userid"])
 
 globo = Entity(
     name="globo", 
@@ -28,9 +26,9 @@ globo = Entity(
 
 globo_source = PostgreSQLSource(
     name="globo_source",
-    query="select userid, timestamphistory, create_timestamp, history, numberofclickshistory from table_full",
+    query="select userid, news_concat, history, timestamphistory from table_full",
     timestamp_field="timestamphistory",
-    created_timestamp_column="create_timestamp",
+#   created_timestamp_column="create_timestamp",
 )
 
 globo_fv = FeatureView(
@@ -38,8 +36,9 @@ globo_fv = FeatureView(
     entities=[globo],
     ttl=None,
     schema=[
+        Field(name="timestamphistory", dtype=UnixTimestamp),
         Field(name="history", dtype=String),
-        Field(name="numberofclickshistory", dtype=Int64),
+        Field(name="news_concat", dtype=String),
     ],
     source=globo_source,
     online=True,

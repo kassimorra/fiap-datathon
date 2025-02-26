@@ -15,10 +15,19 @@ with st.sidebar:
         except requests.exceptions.RequestException as e:
             st.session_state.db_result = f"Connection error: {str(e)}"
 
+    if st.button("Materialize Feature"):
+        try:
+            response = requests.get("http://feast-globo:8001/materialize")
+            st.session_state.materialize_result = response.text
+        except requests.exceptions.RequestException as e:
+            st.session_state.materialize_result = f"Connection error: {str(e)}"
+
 if "db_result" in st.session_state:
     st.text_area("API Response", value=st.session_state.db_result, height=200)
 
 st.subheader("Get news prediction")
+st.write("Logged user: e7a6c843011a4823501fe0b297c0956d84db3d0f7399f4736336b6807d6a7339")
+
 user_id = st.text_input("Enter user ID")
 
 if st.button("Get predictions"):
@@ -44,3 +53,7 @@ if "user_result" in st.session_state:
         st.write("Predicted news data:")
         st.dataframe(st.session_state.user_result)  # Display as table
     st.text_area("Raw API Response", value=st.session_state.raw_response, height=200)
+
+if "materialize_result" in st.session_state:
+    st.write("Materialize result:")
+    st.write(st.session_state.materialize_result)
