@@ -1,0 +1,150 @@
+import pytest
+from unittest.mock import MagicMock, patch
+import pandas as pd
+from psycopg2.extras import execute_values
+from utils._process import process_insert_db, process_get_df_batch, ProcessTrain, ProcessItem, ProcessParam, DatabaseTrain, DatabaseItem
+
+
+
+# Mock DatabaseTrain class
+class MockDatabaseTrain:
+    def __init__(self):
+        self.cursor = MagicMock()
+        self.conn = MagicMock()
+
+    def insert_table(self):
+        return "INSERT INTO table (col1, col2) VALUES %s"  # Example SQL insert query
+
+
+# Test for process_insert_db
+@patch("utils_process.execute_values")
+def test_process_insert_db(mock_execute_values):
+    # Prepare mock dataframe
+    data = {'col1': [1, 2, 3], 'col2': ['A', 'B', 'C']}
+    df = pd.DataFrame(data)
+
+    # Create a mock database connection
+    mock_db = MockDatabaseTrain()
+
+    # Define parameters for the test
+    num_batches = 3
+    batch_index = 1
+    fpath = "mock_file.csv"
+
+    # Call the process_insert_db function
+    process_insert_db(df, mock_db, num_batches, batch_index, fpath)
+
+    # Assert that execute_values was called with correct parameters
+    mock_execute_values.assert_called_once_with(
+        mock_db.cursor,
+        mock_db.insert_table(),
+        [(1, 'A'), (2, 'B'), (3, 'C')]  # Expect the rows to be inserted
+    )
+
+    # Assert that commit was called on the connection
+    mock_db.conn.commit.assert_called_once()
+
+    # Capture the print output and check the expected print statement
+    captured = pytest.capture_sys.stdout()
+    assert captured == f"dfSize = 3 -> File: {fpath} -> Processed batch: {batch_index + 1}/{num_batches}\n"
+
+
+def test_process_get_df_batch():
+    data = {'col1': [1, 2, 3, 4, 5], 'col2': ['A', 'B', 'C', 'D', 'E']}
+    df = pd.DataFrame(data)
+
+    batch_size = 2
+    batch_index = 1  # Get the second batch
+
+    result_df = process_get_df_batch(df, batch_size, batch_index)
+
+    # Expected result is the second batch: rows 2 and 3
+    expected_df = pd.DataFrame({'col1': [3, 4], 'col2': ['C', 'D']})
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_process_get_df_batch_first_batch():
+    data = {'col1': [1, 2, 3, 4, 5], 'col2': ['A', 'B', 'C', 'D', 'E']}
+    df = pd.DataFrame(data)
+
+    batch_size = 2
+    batch_index = 0  # Get the first batch
+
+    result_df = process_get_df_batch(df, batch_size, batch_index)
+
+    # Expected result is the first batch: rows 0 and 1
+    expected_df = pd.DataFrame({'col1': [1, 2], 'col2': ['A', 'B']})
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_process_get_df_batch_large_batch():
+    data = {'col1': [1, 2, 3], 'col2': ['A', 'B', 'C']}
+    df = pd.DataFrame(data)
+
+    batch_size = 5  # Larger than the total number of rows
+    batch_index = 0  # Get the first batch
+
+    result_df = process_get_df_batch(df, batch_size, batch_index)
+
+    # Since the batch size is larger than the dataframe, it should return all rows
+    expected_df = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['A', 'B', 'C']})
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_process_get_df_batch_invalid_batch_index():
+    data = {'col1': [1, 2, 3, 4, 5], 'col2': ['A', 'B', 'C', 'D', 'E']}
+    df = pd.DataFrame(data)
+
+    batch_size = 2
+    batch_index = 3  # There are only 3 batches, so batch_index 3 is invalid
+
+    result_df = process_get_df_batch(df, batch_size, batch_index)
+
+    # This should return an empty dataframe, as the batch index is out of range
+    expected_df = pd.DataFrame(columns=['col1', 'col2'])  # Empty dataframe with the same columns
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+
+
+
+# Mock classes
+class MockDatabaseTrain(DatabaseTrain):
+    def recreate_table(self):
+        pass
+    def insert_table(self):
+        return "INSERT INTO table (col1) VALUES %s"
+    def close(self):
+        pass
+
+class MockDatabaseItem(DatabaseItem):
+    def recreate_table(self):
+        pass
+    def insert_table(self):
+        return "INSERT INTO table (col1) VALUES %s"
+    def close(self):
+        pass
+
+# Test ProcessTrain run
+@patch('glob.glob')
+@patch('utils_process.DatabaseTrain', MockDatabaseTrain)
+def test_process_train_run(mock_glob):
+    mock_glob.return_value = ["mock_file.csv"]
+    process = ProcessTrain()
+    process.run()
+
+    # Assert the expected methods are called
+    assert process._database.recreate_table.called
+    assert process._database.close.called
+
+# Test ProcessItem run
+@patch('glob.glob')
+@patch('utils_process.DatabaseItem', MockDatabaseItem)
+def test_process_item_run(mock_glob):
+    mock_glob.return_value = ["mock_item_file.csv"]
+    process = ProcessItem()
+    process.run()
+
+    # Check that _process_file is called
+    assert process._database.recreate_table.called
+    assert process._database.close.called
