@@ -3,7 +3,7 @@ import requests
 import json
 import pandas as pd
 
-st.title("Notícias mais prováveis de serem clicadas")
+st.title("News most likely to be clicked")
 # st.write("Lista de notícias:")
 
 with st.sidebar:
