@@ -1,19 +1,30 @@
 # fiap-datathon
 
 
-## Objetivo
+## Objetivo  
 
 Este projeto visa implementar um projeto de MLOps para prever os próximos cliques de notícias de um usuário.
 
 ## O que foi utilizado
 
-Neste projeto foram utilizados técnicas de tratamento de dados e ETL para ingestão no banco em PostGreSQL.
+Neste projeto, foram aplicadas técnicas de tratamento de dados e ETL para ingestão no banco de dados **PostgreSQL**.  
 
-O pipeline de dados, modelo, feature store e streamlit foram inseridos em containers. A orquestração dos containers foi construída usando o docker-compose.yml respeitando as portas de cada serviço.
-Para a feature store foi utilizado o Feast.
-Interface para simulação de usuário e controle da materialização da feature store foi feita utilizando o streamlit.
+Toda a arquitetura foi conteinerizada, incluindo o **pipeline de dados**, o **modelo de machine learning**, a **feature store** e a interface **Streamlit**. A orquestração dos containers foi realizada via **Docker Compose**, garantindo a comunicação entre os serviços por meio das portas apropriadas.  
 
-Toda conexão entre os containers foi realizada através de Web API com o FastAPI no Python.
+### 🔹 Feature Store  
+Para a **feature store**, utilizamos o **Feast**, permitindo a gestão e materialização eficiente das features. A interface para simulação de usuários e controle da materialização da feature store foi desenvolvida em **Streamlit**.  
+
+### 🔹 Comunicação Entre Serviços  
+A comunicação entre os containers ocorre via **Web API**, implementada com **FastAPI** em Python.  
+
+### 🔹 Modelo de Machine Learning  
+O modelo utilizado neste projeto é baseado em **Content-Based Filtering**, permitindo recomendar notícias relevantes ao usuário com base em seu histórico de interesse.  
+
+####
+- As notícias são convertidas em **embeddings**.  
+- Utilizamos **TF-IDF** para processar os textos.  
+- Construímos uma **matriz de similaridade** para identificar conteúdos relevantes.  
+- O objetivo é recomendar **notícias mais recentes e ainda não lidas**, alinhadas aos interesses individuais do usuário.  
 
 ## Desenho de solução
 
